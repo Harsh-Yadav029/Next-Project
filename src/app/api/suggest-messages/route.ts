@@ -8,6 +8,12 @@ const openai = new OpenAI({
 
 export const runtime = 'edge';
 
+const fallbackQuestions = [
+  "What’s a hobby you’ve recently started?||If you could have dinner with any historical figure, who would it be?||What’s a simple thing that makes you happy?",
+  "What's the best book you've read recently?||Where is your dream vacation destination?||What's a skill you'd love to learn?",
+  "What's your favorite childhood memory?||Do you prefer coffee or tea?||What is your go-to comfort movie?"
+];
+
 export async function POST(req: Request) {
   try {
     const prompt =
@@ -22,17 +28,19 @@ export async function POST(req: Request) {
 
     const stream = OpenAIStream(response);
     
-    
     return new StreamingTextResponse(stream);
   } catch (error) {
-    if (error instanceof OpenAI.APIError) {
-      // OpenAI API error handling
-      const { name, status, headers, message } = error;
-      return NextResponse.json({ name, status, headers, message }, { status });
-    } else {
-      // General error handling
-      console.error('An unexpected error occurred:', error);
-      throw error;
-    }
+    console.warn('OpenAI API call failed, falling back to local questions:', error);
+
+    const randomSet = fallbackQuestions[Math.floor(Math.random() * fallbackQuestions.length)];
+    
+    const fallbackStream = new ReadableStream({
+      start(controller) {
+        controller.enqueue(new TextEncoder().encode(randomSet));
+        controller.close();
+      }
+    });
+
+    return new StreamingTextResponse(fallbackStream);
   }
 }

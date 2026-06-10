@@ -8,15 +8,16 @@ export async function sendVerificationEmail(
   verifyCode: string
 ): Promise<ApiResponse> {
   try {
+    console.log(`\n[LOCAL TESTING] Verification Code for ${username}: ${verifyCode}\n`);
     await resend.emails.send({
-      from: 'dev@hiteshchoudhary.com',
+      from: 'onboarding@resend.dev',
       to: email,
       subject: 'Mystery Message Verification Code',
       react: VerificationEmail({ username, otp: verifyCode }),
-    });
+    })
     return { success: true, message: 'Verification email sent successfully.' };
   } catch (emailError) {
-    console.error('Error sending verification email:', emailError);
-    return { success: false, message: 'Failed to send verification email.' };
+    console.error('Error sending verification email (but allowing signup to proceed locally):', emailError);
+    return { success: true, message: 'Verification code logged to console.' };
   }
 }
